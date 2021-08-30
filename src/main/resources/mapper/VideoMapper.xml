@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="net.online_class.dao.VideoMapper">
+    <!--开启mapper的namespace下的二级缓存-->
+    <!--
+        eviction:代表的是缓存回收策略，常见下面两种。
+        (1) LRU,最近最少使用的，一处最长时间不用的对象
+        (2) FIFO,先进先出，按对象进入缓存的顺序来移除他们
+
+        flushInterval:刷新间隔时间，单位为毫秒，这里配置的是100秒刷新，如果不配置它，当SQL被执行的时候才会去刷新缓存。
+        size:引用数目，代表缓存最多可以存储多少个对象，设置过大会导致内存溢出
+        readOnly:只读，缓存数据只能读取而不能修改，默认值是false
+    -->
+    <cache eviction="LRU" flushInterval="100000" readOnly="true" size="1024"/>
+    <!-- 定制mysql字段 -->
+    <sql id="base_video_field">
+        id,title,summary,cover_img
+    </sql>
+
+    <!-- useCache="false" 二级缓存是针对namespace的所有SQL，useCache配置某SQL不用耳机换成-->
+    <select id="selectById" parameterType="java.lang.Integer" resultType="Video" useCache="false">
+        select * from video where id = #{video_id,jdbcType=INTEGER}
+    </select>
+
+    <!-- 使用mysql字段 -->
+    <select id="selectAllByXml" resultType="Video">
+--         select * from video
+        select <include refid="base_video_field"/> from video
+    </select>
+
+    <select id="selectByPointAndTitleLike" resultType="Video">
+        select * from video where point = #{point,jdbcType=DOUBLE} and title like concat("%",#{title,jdbcType=VARCHAR},"%")
+    </select>
+
+    <!-- useGeneratedKeys插入数据时,将数据库主键映射到实体类对象上 -->
+    <insert id="add" parameterType="Video" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO `video` ( `title`, `summary`, `cover_img`, `price`, `create_time`, `point`)
+            VALUES
+                (#{title,jdbcType=VARCHAR},
+                #{summary,jdbcType=VARCHAR},
+                #{coverImg,jdbcType=VARCHAR},
+                #{price,jdbcType=INTEGER},
+                #{createTime,jdbcType=TIMESTAMP},
+                #{point,jdbcType=DOUBLE});
+    </insert>
+
+    <!-- 批量插入Video,删除SQL语句最后的分号 -->
+    <insert id="addBatch" parameterType="Video" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO `video` ( `title`, `summary`, `cover_img`, `price`, `create_time`, `point`)
+            VALUES
+                <foreach collection="list" item="video" separator=",">
+                    (#{video.title,jdbcType=VARCHAR},
+                    #{video.summary,jdbcType=VARCHAR},
+                    #{video.coverImg,jdbcType=VARCHAR},
+                    #{video.price,jdbcType=INTEGER},
+                    #{video.createTime,jdbcType=TIMESTAMP},
+                    #{video.point,jdbcType=DOUBLE})
+                </foreach>
+    </insert>
+
+
+    <!-- 没有使用OGNL表达式,所有字段都被更新 -->
+    <update id="updateVideo" parameterType="Video">
+        UPDATE video
+            SET
+                title = #{title,jdbcType=VARCHAR},
+                summary = #{summary,jdbcType=VARCHAR},
+                cover_img = #{coverImg,jdbcType=VARCHAR},
+                create_time = #{createTime,jdbcType=VARCHAR},
+                price = #{price,jdbcType=INTEGER},
+                point = #{point,jdbcType=INTEGER}
+            WHERE
+                id = #{id}
+    </update>
+
+    <!-- 使用OGNL表达式,实现部分字段的更新-->
+    <update id="updateVideoSelective" parameterType="net.online_class.domain.Video">
+        UPDATE video
+            <trim prefix="SET" suffixOverrides=",">
+                <if test="title != null ">title = #{title,jdbcType=VARCHAR},</if>
+                <if test="summary != null ">summary = #{summary,jdbcType=VARCHAR},</if>
+                <if test="coverImg != null ">cover_img = #{coverImg,jdbcType=VARCHAR},</if>
+                <if test="createTime != null ">create_time = #{createTime,jdbcType=VARCHAR},</if>
+                <if test="price != null ">price = #{price,jdbcType=INTEGER},</if>
+                <if test="point != null ">point = #{point,jdbcType=DOUBLE},</if>
+            </trim>
+            WHERE
+            id = #{id}
+    </update>
+
+    <!-- 根据条件删除数据,因为 -->
+    <delete id="deleteVideo" parameterType="java.util.Map">
+        DELETE FROM video WHERE create_time <![CDATA[ > ]]> #{createTime} and price <![CDATA[ < ]]> #{price}
+    </delete>
+
+    <resultMap id="VideoResultMap" type="Video">
+        <!-- type:resultMap映射的JAVA类 -->
+        <!-- id标签:当前类的主键 -->
+        <!-- result:当前类的其他属性 -->
+        <!-- column:SQL查询出来的字段 -->
+        <!-- property:JAVA类需要的字段 -->
+        <id column="id" property="id" jdbcType="INTEGER" />
+        <result column="video_tile" property="title"  jdbcType="VARCHAR" />
+        <result column="summary" property="summary"  jdbcType="VARCHAR" />
+        <result column="cover_img"  property="coverImg"  jdbcType="VARCHAR" />
+    </resultMap>
+
+    <select id="selectBaseFieldByIdWithResultMap" resultMap="VideoResultMap">
+        select id , title as video_tile, summary, cover_img from video where id = #{video_id}
+    </select>
+
+</mapper>

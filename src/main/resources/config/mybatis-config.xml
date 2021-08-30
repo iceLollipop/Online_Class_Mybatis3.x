@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <!-- 映射JAVA类 驼峰属性字段对应数据库对应的下划线字段,否则查不到数据显示为null -->
+    <settings>
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+        <!--这个配置使全局的映射器(二级缓存)启用或禁用缓存，全局总开关，这里关闭，mapper中开启了也没用-->
+        <setting name="cacheEnabled" value="true" />
+        <!--延迟加载总开关-->
+        <setting name="lazyLoadingEnabled" value="true"/>
+        <!--将aggressiveLazyLoading设置为false表示按需加载，默认为true-->
+        <setting name="aggressiveLazyLoading" value="false"/>
+    </settings>
+    <typeAliases>
+        <!--<typeAlias type="net.online_class.domain.Video" alias="Video"/>-->
+        <package name="net.online_class.domain"/>
+    </typeAliases>
+    <environments default="development">
+        <environment id="development">
+            <transactionManager type="JDBC"/>
+            <!-- <transactionManager type="MANAGED"/>-->
+            <dataSource type="POOLED">
+                <property name="driver" value="com.mysql.cj.jdbc.Driver"/>
+                <property name="url" value="jdbc:mysql://127.0.0.1:3306/online_class?&amp;useUnicode=true&amp;characterEncoding=utf-8&amp;useSSL=false&amp;serverTimezone=GMT%2B8"/>
+                <property name="username" value="root"/>
+                <property name="password" value="123456"/>
+            </dataSource>
+        </environment>
+    </environments>
+    <mappers>
+        <mapper resource="mapper/VideoMapper.xml"/>
+        <mapper resource="mapper/VideoOrderMapper.xml"/>
+    </mappers>
+</configuration>
